@@ -1,10 +1,7 @@
 from typing import List, Tuple
 
-
 #Number of days in schedule
 days = 3
-
-
 
 # Employee class
 class Employee:
@@ -18,6 +15,7 @@ class Employee:
         self.offShifts = []
         self.shiftsInRow = 0
         self.hadShift = False
+        self.doNotAssign = False
 
 
 def shiftsInRow(employee: Employee):
@@ -30,6 +28,25 @@ def shiftsInRow(employee: Employee):
     if employee.shiftsInRow == 5:
         employee.shiftsInRow = -1
 
+# Get the available employees
+def availableEmployees(employees: list[Employee], day: int, shift: int) -> list[Employee]:
+    # Generate the employees (list comprehension)
+    available_employees = [employee for employee in employees if shift in employee.possibleShifts[day] if shift not in employee.offShifts if employee.hadShift == False]
+    return available_employees
+
+#Check if there is descont employee on next shift, and if he has 2 possible shifts
+def isNextShiftDescont(employees: list[Employee], day: int, shift: int) -> bool:
+    # Generate the employees (list comprehension)
+    available_employees = availableEmployees(employees, day, shift+1)
+    descont_employee = [employee for employee in available_employees if employee.descont]
+    if descont_employee:
+        try:
+            descont_employee[0].doNotAssign = True
+        except:
+            pass
+        return True
+    else:
+        return False
 
 # Generate the schedule
 def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
@@ -37,7 +54,7 @@ def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
     
     # Generate the of days (range)
     for day in range(days):
-        
+                
         nonDescontPriority = False
         
         #Set hadShift to False for all employees
@@ -47,8 +64,10 @@ def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
 
         # Generate the shifts (range)
         for shift in [1, 2, 3]:
-            # Generate the employees (list comprehension)
-            available_employees = [employee for employee in employees if shift in employee.possibleShifts[day] if shift not in employee.offShifts if employee.hadShift == False]
+
+            # Get the available employees
+            available_employees = availableEmployees(employees, day, shift)
+
             # Generate the contract employees (list comprehension)
             contract_employees = [employee for employee in available_employees if employee.contract]
             
@@ -93,7 +112,6 @@ def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
             # Assign the rest of the employees
             available_employees.sort(key=lambda employee: employee.shiftsInRow, reverse=True)
      
-
             iterationOfNonDescontEmployee = 0
             
             while len([x for x in schedule[day] if x[1] == shift]) < 3:
@@ -101,6 +119,12 @@ def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
                     break
                 
                 iterationOfNonDescontEmployee += 1
+                
+                #Check if there is descont employee on next shift
+                if shift != 3:
+                    if isNextShiftDescont(employees, day, shift):
+                        nonDescontPriority = False
+                    
                 
                 #If there is nonDescontPriority, then non descont employee is assigned first
                 if nonDescontPriority and iterationOfNonDescontEmployee != 3 and shift != 3:
@@ -110,6 +134,17 @@ def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
                             available_employees.remove(employee)
                             shiftsInRow(employee)
                             break
+                #If there is no nonDescontPriority, then descont employee is assigned first
+                #but if employee has doNotAssign set to True, then he is not assigned
+                elif iterationOfNonDescontEmployee != 3 and shift != 3:
+                    for employee in available_employees:
+                        if employee.doNotAssign == False:
+                            schedule[day].append((employee.name, shift))
+                            available_employees.remove(employee)
+                            shiftsInRow(employee)
+                            break
+                
+                #Else, employee is assigned by order
                 else:
                     employee = available_employees.pop(0)
                     schedule[day].append((employee.name, shift))
