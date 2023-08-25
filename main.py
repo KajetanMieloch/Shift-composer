@@ -17,6 +17,7 @@ class Employee:
         self.contract = contract
         self.offShifts = []
         self.shiftsInRow = 0
+        self.hadShift = False
 
 # Generate the schedule
 def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
@@ -24,10 +25,16 @@ def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
     
     # Generate the of days (range)
     for day in range(days):
+        
+        #Set hadShift to False for all employees
+        allEmployees = [employee for employee in employees]
+        for employee in allEmployees:
+            employee.hadShift = False
+
         # Generate the shifts (range)
         for shift in [1, 2, 3]:
             # Generate the employees (list comprehension)
-            available_employees = [employee for employee in employees if shift in employee.possibleShifts[day] if shift not in employee.offShifts]
+            available_employees = [employee for employee in employees if shift in employee.possibleShifts[day] if shift not in employee.offShifts if employee.hadShift == False]
             # Generate the contract employees (list comprehension)
             contract_employees = [employee for employee in available_employees if employee.contract]
             
@@ -54,8 +61,13 @@ def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
             if descont_employee is not None and not contractEmployOnShift:
                 schedule[day].append((descont_employee[0].name, shift))
                 available_employees.remove(descont_employee[0])
+                
+                #Descont employee had shift
+                descont_employee[0].hadShift = True
+                
+                #Number of shifts in row is increased by 1 for descont employee
                 descont_employee[0].shiftsInRow += 1
-                #Number of shifts in row is reseted to 0
+                #Number of shifts in row is reseted to 0 for descont employee
                 if descont_employee[0].shiftsInRow == 5:
                     descont_employee[0].shiftsInRow = -1
             
@@ -68,8 +80,13 @@ def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
                     break
                 employee = available_employees.pop(0)
                 schedule[day].append((employee.name, shift))
+                
+                #Employee had shift
+                employee.hadShift = True
+                
+                #Number of shifts in row is increased by 1
                 employee.shiftsInRow += 1
-                #Number of shifts in row is reseted to 0
+                #Number of shifts in row is reseted to -1
                 if employee.shiftsInRow == 5:
                     employee.shiftsInRow = -1
                 
@@ -101,16 +118,16 @@ def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
     return schedule
  
 
-PJ = Employee("Same2.0", "J", [[]], True,False,False)
-KM2 = Employee("Same1 - Brutusia", "M", [[1]], True,False,False)
-KM3 = Employee("Same2, weekend 1,2 - Gosia", "M", [[]], True,False,False)
-KM1 = Employee("Same2.2 - UmowaPraca", "M", [[2]], True,False,True)
-DS = Employee("Same3.0", "S", [[3]], True,False,False)
-MB = Employee("Same3.1", "B", [[3]], True,False,False)
-KC = Employee("Same3.3 - Kasia", "C", [[1]], True,False,False)
-BM = Employee("Same3.4 - Basia", "M", [[1]], True,False,False)
-KT = Employee("same3.2 - UmowaPraca", "T", [[3]], True,False,True)
-FJ = Employee("Koordynator", "J", [[]], False,True,False)
+PJ = Employee("Same2 - Maryja", "J", [[2],[2]], True,False,False)
+KM2 = Employee("Same2 - Brutusia", "M", [[2],[2]], True,False,False)
+KM3 = Employee("Same2 - Gosia", "M", [[],[]], True,False,False)
+KM1 = Employee("Same2 - UmowaPraca", "M", [[],[]], True,False,True)
+DS = Employee("Same3 - Kajetan", "S", [[],[]], True,False,False)
+MB = Employee("2 i 3 - Maks", "B", [[2,3],[3]], True,False,False)
+KC = Employee("Same3 - Kasia", "C", [[3],[3]], True,False,False)
+BM = Employee("Same3 - Basia", "M", [[3],[3]], True,False,False)
+KT = Employee("same3 - UmowaPraca", "T", [[],[]], True,False,True)
+FJ = Employee("Koordynator", "J", [[1],[1]], False,True,False)
 
 
 employees = [PJ, KM1, DS, MB, KT, FJ, KC, BM, KM2, KM3]
