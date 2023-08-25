@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 
 #Number of days in schedule
-days = 1
+days = 3
 
 
 
@@ -19,12 +19,26 @@ class Employee:
         self.shiftsInRow = 0
         self.hadShift = False
 
+
+def shiftsInRow(employee: Employee):
+    #Employee had shift
+    employee.hadShift = True
+    
+    #Number of shifts in row is increased by 1
+    employee.shiftsInRow += 1
+    #Number of shifts in row is reseted to -1
+    if employee.shiftsInRow == 5:
+        employee.shiftsInRow = -1
+
+
 # Generate the schedule
 def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
     schedule = [[] for _ in range(days)]
     
     # Generate the of days (range)
     for day in range(days):
+        
+        nonDescontPriority = False
         
         #Set hadShift to False for all employees
         allEmployees = [employee for employee in employees]
@@ -49,50 +63,61 @@ def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
            
             coordinator = next((employee for employee in available_employees if employee.coordinator), None)
             
+            #Get all descont employees
+            descont_employee = [employee for employee in available_employees if employee.descont]
+            
             # Assign the coordinator (no more than one per shift)  
             if coordinator:
                 schedule[day].append((coordinator.name, shift))
+                
+                if len(descont_employee) < 4 and shift == 1:
+                    nonDescontPriority = True
                 continue
+            else:
+                if len(descont_employee) < 7 and shift == 1:
+                    nonDescontPriority = True
             
             #Assign the descont employee (at least one per shift)
-            descont_employee = [employee for employee in available_employees if employee.descont]
             #Sort the list of descont employees by shiftsInRow
             descont_employee.sort(key=lambda employee: employee.shiftsInRow, reverse=True)
-            if descont_employee is not None and not contractEmployOnShift:
+            if descont_employee and not contractEmployOnShift:
                 schedule[day].append((descont_employee[0].name, shift))
                 available_employees.remove(descont_employee[0])
                 
-                #Descont employee had shift
-                descont_employee[0].hadShift = True
+                shiftsInRow(descont_employee[0])
                 
-                #Number of shifts in row is increased by 1 for descont employee
-                descont_employee[0].shiftsInRow += 1
-                #Number of shifts in row is reseted to 0 for descont employee
-                if descont_employee[0].shiftsInRow == 5:
-                    descont_employee[0].shiftsInRow = -1
+                
+            elif not descont_employee:                             
+                raise Exception("not enough descont employees on day " + str(day+1) + " shift " + str(shift))
             
             # Assign the rest of the employees
             available_employees.sort(key=lambda employee: employee.shiftsInRow, reverse=True)
-          
+     
 
+            iterationOfNonDescontEmployee = 0
+            
             while len([x for x in schedule[day] if x[1] == shift]) < 3:
                 if not available_employees:
                     break
-                employee = available_employees.pop(0)
-                schedule[day].append((employee.name, shift))
                 
-                #Employee had shift
-                employee.hadShift = True
+                iterationOfNonDescontEmployee += 1
                 
-                #Number of shifts in row is increased by 1
-                employee.shiftsInRow += 1
-                #Number of shifts in row is reseted to -1
-                if employee.shiftsInRow == 5:
-                    employee.shiftsInRow = -1
+                #If there is nonDescontPriority, then non descont employee is assigned first
+                if nonDescontPriority and iterationOfNonDescontEmployee != 3 and shift != 3:
+                    for employee in available_employees:
+                        if employee.descont == False:
+                            schedule[day].append((employee.name, shift))
+                            available_employees.remove(employee)
+                            shiftsInRow(employee)
+                            break
+                else:
+                    employee = available_employees.pop(0)
+                    schedule[day].append((employee.name, shift))
+                    shiftsInRow(employee)
                 
             #If there is less than 2 employees on shift, then recurency is called
             if len([x for x in schedule[day] if x[1] == shift]) < 2:
-                print("Recurency")
+                raise Exception("Not enough employees on shift")
                 #TDOO: Recurency is called and the shift is changed.
 
         if day != 0:
@@ -118,16 +143,16 @@ def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
     return schedule
  
 
-PJ = Employee("Same2 - Maryja", "J", [[2],[2]], True,False,False)
-KM2 = Employee("Same2 - Brutusia", "M", [[2],[2]], True,False,False)
-KM3 = Employee("Same2 - Gosia", "M", [[],[]], True,False,False)
-KM1 = Employee("Same2 - UmowaPraca", "M", [[],[]], True,False,True)
-DS = Employee("Same3 - Kajetan", "S", [[],[]], True,False,False)
-MB = Employee("2 i 3 - Maks", "B", [[2,3],[3]], True,False,False)
-KC = Employee("Same3 - Kasia", "C", [[3],[3]], True,False,False)
-BM = Employee("Same3 - Basia", "M", [[3],[3]], True,False,False)
-KT = Employee("same3 - UmowaPraca", "T", [[],[]], True,False,True)
-FJ = Employee("Koordynator", "J", [[1],[1]], False,True,False)
+PJ = Employee("Maryja", "J", [[2],[2],[2]], True,False,False)
+KM2 = Employee("Brutusia", "M", [[2],[2],[2]], False,False,False)
+KM3 = Employee("Gosia", "M", [[2],[2],[2,3]], True,False,False)
+KM1 = Employee("UmowaPraca - Krystian", "M", [[],[],[]], False,False,True)
+DS = Employee("Kajetan", "S", [[3],[3],[3]], False,False,False)
+MB = Employee("Maks", "B", [[],[2],[2,3]], False,False,False)
+KC = Employee("Kasia", "C", [[3],[3],[]], True,False,False)
+BM = Employee("Basia", "M", [[3],[3],[3]], False,False,False)
+KT = Employee("UmowaPraca - Kacper", "T", [[],[],[]], False,False,True)
+FJ = Employee("Koordynator", "J", [[1],[1],[1]], False,True,False)
 
 
 employees = [PJ, KM1, DS, MB, KT, FJ, KC, BM, KM2, KM3]
