@@ -1,10 +1,7 @@
 from typing import List, Tuple
 
-
 #Number of days in schedule
 days = 3
-
-
 
 # Employee class
 class Employee:
@@ -51,6 +48,42 @@ def isNextShiftDescont(employees: list[Employee], day: int, shift: int) -> bool:
         return True
     else:
         return False
+
+#assign OffSifts for every employee
+def assignEmployeeOffShifts(schedule: List[List[Tuple[str, int]]], day: int) -> list[Employee]:
+    thisDaySchedule = [employee for employee in schedule][day]
+    for n in range(len(thisDaySchedule)):
+        if thisDaySchedule[n][1] == 3:
+            for employee in employees:
+                if employee.name == thisDaySchedule[n][0]:
+                    employee.offShifts.clear()
+                    employee.offShifts.append(1)
+                    employee.offShifts.append(2)
+        elif thisDaySchedule[n][1] == 2:
+            for employee in employees:
+                if employee.name == thisDaySchedule[n][0]:
+                    employee.offShifts.clear()
+                    employee.offShifts.append(1)
+        else:
+            for employee in employees:
+                if employee.name == thisDaySchedule[n][0]:
+                    employee.offShifts.clear()
+
+def assignEmployeesByOrder(available_employees: List[Employee], schedule: List[List[Tuple[str, int]]], day: int, shift: int, whichInTurn: int) -> bool:
+    try:
+        employee = available_employees.pop(whichInTurn)
+        schedule[day].append((employee.name, shift))
+        shiftsInRow(employee)
+    except:
+        #If there is no more employees to assign, but there are at least 2 employees on shift,
+        #then go to next shift
+        if len([x for x in schedule[day] if x[1] == shift]) >= 2:
+            return True
+
+        #If there is less than 2 employees on shift, then recurency is called
+        else:
+            #TODO Program a recurency, that will figure out what to do if there is no more employees to assign
+            raise Exception("Not enough employees on shift")
 
 # Generate the schedule
 def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
@@ -152,56 +185,18 @@ def generate_schedule(employees: list[Employee]) -> list[list[tuple[str, int]]]:
                 #Else, employee is assigned by order
                 else:
                     if employee.doNotAssign == False:                        
-                        try:
-                            employee = available_employees.pop(0)
-                            schedule[day].append((employee.name, shift))
-                            shiftsInRow(employee)
-                        except:
-                            #If there is no more employees to assign, but there are at least 2 employees on shift,
-                            #then go to next shift
-                            if len([x for x in schedule[day] if x[1] == shift]) >= 2:
-                                break
-                            #If there is less than 2 employees on shift, then recurency is called
-                            else:
-                                #TODO Program a recurency, that will figure out what to do if there is no more employees to assign
-                                raise Exception("Not enough employees on shift")
+                        if assignEmployeesByOrder(available_employees, schedule, day, shift ,0):
+                        	break   
                     else:
-                        try:
-                            employee = available_employees.pop(1)
-                            schedule[day].append((employee.name, shift))
-                            shiftsInRow(employee)
-                        except:
-                            #If there is no more employees to assign, but there are at least 2 employees on shift,
-                            #then go to next shift
-                            if len([x for x in schedule[day] if x[1] == shift]) >= 2:
-                                break
-                            #If there is less than 2 employees on shift, then recurency is called
-                            else:
-                                #TODO Program a recurency, that will figure out what to do if there is no more employees to assign
-                                raise Exception("Not enough employees on shift")
+                        if assignEmployeesByOrder(available_employees, schedule, day, shift ,1):
+                        	break
                             
             #TODO Program a recurency, that will figure out what to do if there is no more employees to assign
             #If there is less than 2 employees on shift, then recurency is called
             if len([x for x in schedule[day] if x[1] == shift]) < 2:
                 raise Exception("Not enough employees on shift")
 
-        prevDaySchedule = [employee for employee in schedule][day]
-        for n in range(len(prevDaySchedule)):
-            if prevDaySchedule[n][1] == 3:
-                for employee in employees:
-                    if employee.name == prevDaySchedule[n][0]:
-                        employee.offShifts.clear()
-                        employee.offShifts.append(1)
-                        employee.offShifts.append(2)
-            elif prevDaySchedule[n][1] == 2:
-                for employee in employees:
-                    if employee.name == prevDaySchedule[n][0]:
-                        employee.offShifts.clear()
-                        employee.offShifts.append(1)
-            else:
-                for employee in employees:
-                    if employee.name == prevDaySchedule[n][0]:
-                        employee.offShifts.clear()
+        assignEmployeeOffShifts(schedule, day)
 
 
     return schedule
@@ -217,7 +212,6 @@ KC = Employee("Kasia", "C", [[],[3],[]], True,False,False)
 BM = Employee("Basia", "M", [[3],[],[3]], False,False,False)
 KT = Employee("UmowaPraca - Kacper", "T", [[],[],[]], False,False,True)
 FJ = Employee("Koordynator", "J", [[1],[1],[1]], False,True,False)
-
 
 
 employees = [PJ, KM1, DS, MB, KT, FJ, KC, BM, KM2, KM3]
