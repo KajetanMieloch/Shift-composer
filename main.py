@@ -53,20 +53,23 @@ def isNextShiftDescont(employees: list[Employee], day: int, shift: int) -> bool:
 def assignEmployeeOffShifts(schedule: List[List[Tuple[str, int]]], day: int) -> list[Employee]:
     thisDaySchedule = [employee for employee in schedule][day]
     for n in range(len(thisDaySchedule)):
+        #If employee has shift 3, then he has offShifts 1 and 2
         if thisDaySchedule[n][1] == 3:
             for employee in employees:
                 if employee.name == thisDaySchedule[n][0]:
                     employee.offShifts.clear()
                     employee.offShifts.append(1)
                     employee.offShifts.append(2)
+        #If employee has shift 2, then he has offShift 1
         elif thisDaySchedule[n][1] == 2:
             for employee in employees:
                 if employee.name == thisDaySchedule[n][0]:
                     employee.offShifts.clear()
                     employee.offShifts.append(1)
+        #If employee has shift 1, or he has no shift, then he has no offShifts
         else:
             for employee in employees:
-                if employee.name == thisDaySchedule[n][0]:
+                if employee.name == thisDaySchedule[n][0] or employee.hadShift == False:
                     employee.offShifts.clear()
 
 def assignEmployeesByOrder(available_employees: List[Employee], schedule: List[List[Tuple[str, int]]], day: int, shift: int, whichInTurn: int) -> bool:
