@@ -1,5 +1,5 @@
 # Shift composer
-Just simple generator for my job
+Just simple generator for my work
 #
 For Python 3.7 and 3.8, add:
 
