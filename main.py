@@ -1,9 +1,18 @@
 from typing import List, Tuple
-from generator import generate_schedule, days
+from generator import generate_schedule, days, NotEnoughEmploeesException, allErrors
 from employees import Employee, defineEmployees
 from statistics import stdev, mean
+from PDFgenerator import generatePDF
 
 schedule = []
+
+def getAllEmployees(employees: List[Employee]) -> List[Employee]:
+    listOfAllEmployees = []
+    for employee in employees:
+        listOfAllEmployees.append(employee.name + " " + employee.surename + " " + str(employee.id))
+    return listOfAllEmployees
+
+listOfAllEmployees = getAllEmployees(defineEmployees())
 
 def printSchedule(schedule: List[List[Tuple[str, int, int]]]):
 
@@ -11,12 +20,37 @@ def printSchedule(schedule: List[List[Tuple[str, int, int]]]):
 
         print(f"Day {day + 1}:")
 
-        for employee_name, shift, id in schedule[day]:
+        for employee_name, shift, id, employee_surename in schedule[day]:
 
             print(f"  Shift {shift}: {employee_name}")
 
 
+def saveScheduleToTXT(schedule: List[List[Tuple[str, int, int]]], filename: str, stats: str = None):
+    with open(filename, 'w') as f:
+        for day in range(len(schedule)):
+            f.write(f"Day {day + 1}:\n")
+            for employee_name, shift, id, employee_surename in schedule[day]:
+                f.write(f"  Shift {shift}: {employee_name} {employee_surename} {id}\n")
+        
+        if stats:
+            f.write(stats)
 
+def saveScheduleToTXTToBeProcessed(schedule: List[List[Tuple[str, int, int]]], filename: str, stats: str = None):
+    with open(filename, 'w') as f:
+        for day in range(len(schedule)):
+            f.write(f"#@$^% {day + 1}\n")
+            employees = set()
+            for employee_name, shift, id, employee_surename in schedule[day]:
+                f.write(f"%^$@# {employee_name} {employee_surename} {id} {shift}\n")
+                employees.add(employee_name)
+            
+            for employee in listOfAllEmployees:
+                if employee.split()[0] not in employees:
+                    f.write(f"%^$@# {employee.split()[0]} {employee.split()[1]} {employee.split()[2]} 0\n")
+        
+        if stats:
+            f.write(stats)
+            
 def ratioOfPossibleShiftsToTotalHours(employee: Employee) -> float:
 
     everyPossibleShift = sum([len(shift) for shift in employee.possibleShifts])
@@ -36,7 +70,6 @@ def calculateFairnessRatios(array: List[float]) -> float:
     return row_stdev / row_mean
 
 
-
 #Generate schedules days*2 sheudles.
 
 for day in range(-days, days+1):
@@ -53,6 +86,8 @@ for day in range(-days, days+1):
 
         totalHours = 0
 
+        employeesHours = []
+
         fairnessArr = []
 
         for employee in employees:
@@ -60,6 +95,7 @@ for day in range(-days, days+1):
             fairnessArr.append(ratioOfPossibleShiftsToTotalHours(employee))
 
             totalHours += employee.hoursInTotal
+            employeesHours.append(str(employee.id) + " " + str(employee.hoursInTotal))
 
         fairnessRatio = calculateFairnessRatios(fairnessArr)
 
@@ -67,7 +103,7 @@ for day in range(-days, days+1):
 
         if generatedSchedule not in schedule:
 
-            schedule.append((generatedSchedule, totalHours, fairnessRatio))
+            schedule.append((generatedSchedule, totalHours, fairnessRatio, employeesHours))
 
 
 
@@ -93,64 +129,51 @@ print("Fair ratio is calculated by dividing the number of disposition by the num
 
 print("In fair ratio, the lower the better")
 
+isThereShedule = True
 option = int(input("Choose option: "))
 
+try:
+    if option == 1:
 
+        schedule.sort(key=lambda x: x[1], reverse=True)
 
-if option == 1:
+    elif option == 2:
 
-    schedule.sort(key=lambda x: x[1], reverse=True)
+        schedule.sort(key=lambda x: x[1])
 
-    printSchedule(schedule[0][0])
+    elif option == 3:
 
-    print("Total hours: " + str(schedule[0][1]))
+        schedule.sort(key=lambda x: x[2])
 
-    print("Fair ratio: " + str(schedule[0][2]))
+    elif option == 4:
 
-elif option == 2:
+        schedule.sort(key=lambda x: x[2], reverse=True)
 
-    schedule.sort(key=lambda x: x[1])
+    elif option == 5:
 
-    printSchedule(schedule[0][0])
+        schedule.sort(key=lambda x: x[1], reverse=True)
 
-    print("Total hours: " + str(schedule[0][1]))
+        schedule.sort(key=lambda x: x[2])
 
-    print("Fair ratio: " + str(schedule[0][2]))
+    
+    else:
+        print("\nWrong option")
+except IndexError:
+    print("\n++++++++++++++++++++++++++++++")
+    print("+There is no schedule to show+")
+    print("++++++++++++++++++++++++++++++\n")
+    farthestDay = sorted(allErrors.getErrors(),key=lambda x: x[0], reverse=True)[0][0] +1
+    farthestDayShift = sorted(allErrors.getErrors(),key=lambda x: x[0], reverse=True)[0][1]
+    print("Try to modify day " + str(farthestDay) + " shift " + str(farthestDayShift) + " and try again")
+    print("\n")
+    isThereShedule = False
 
-elif option == 3:
-
-    schedule.sort(key=lambda x: x[2])
-
-    printSchedule(schedule[0][0])
-
-    print("Fair ratio: " + str(schedule[0][2]))
-
-    print("Total hours: " + str(schedule[0][1]))
-
-elif option == 4:
-
-    schedule.sort(key=lambda x: x[2], reverse=True)
-
-    printSchedule(schedule[0][0])
-
-    print("Fair ratio: " + str(schedule[0][2]))
-
-    print("Total hours: " + str(schedule[0][1]))
-
-elif option == 5:
-
-    schedule.sort(key=lambda x: x[1], reverse=True)
-
-    schedule.sort(key=lambda x: x[2])
-
-    printSchedule(schedule[0][0])
-
-    print("Total hours: " + str(schedule[0][1]))
-
-    print("Fair ratio: " + str(schedule[0][2]))
-
-
-
-print("Would you like to save this schedule in PDF, TXT or CSV file?")
-
-print("COMING SOON")
+if isThereShedule:
+    print("\nGenerated TXT and PDF file!")
+    
+    saveScheduleToTXT(schedule[0][0], "schedule.txt", f"Total hours: {schedule[0][1]}\nFair ratio: {schedule[0][2]}\nEmployees hours: {schedule[0][3]}")
+    saveScheduleToTXTToBeProcessed(schedule[0][0], "output.txt", f"Total hours: {schedule[0][1]}\nFair ratio: {schedule[0][2]}\nEmployees hours: {schedule[0][3]}")
+    generatePDF()
+    
+else:
+    print("No schedule to save\n")
