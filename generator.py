@@ -33,7 +33,7 @@ def generate_schedule(employees: list[Employee], modifierShiftsInRow: int) -> li
     
                 # Assign the coordinator (no more than one per shift)
                 if coordinator:
-                    schedule[day].append((coordinator.name, shift, coordinator.id))
+                    schedule[day].append((coordinator.name, shift, coordinator.id, coordinator.surename))
                     coordinator.hoursInTotal += 8
 
                     if len(descont_employee) < 4 and shift == 1:
@@ -49,7 +49,7 @@ def generate_schedule(employees: list[Employee], modifierShiftsInRow: int) -> li
                 # Assign the contract employees
                 for employee in contract_employees:
                     employee.hoursInTotal += 8
-                    schedule[day].append((employee.name, shift, employee.id))
+                    schedule[day].append((employee.name, shift, employee.id, employee.surename))
                     available_employees.remove(employee)
                     descontAllreadyAssigned = True
 
@@ -83,7 +83,7 @@ def generate_schedule(employees: list[Employee], modifierShiftsInRow: int) -> li
                     if nonDescontPriority and iterationOfNonDescontEmployee <=3 and shift <=3:
                         for employee in available_employees:
                             if employee.descont == False and employee.doNotAssign == False:
-                                schedule[day].append((employee.name, shift, employee.id))
+                                schedule[day].append((employee.name, shift, employee.id, employee.surename))
                                 available_employees.remove(employee)
                                 shiftsInRow(employee, day, modifierShiftsInRow)
                                 break
@@ -92,7 +92,7 @@ def generate_schedule(employees: list[Employee], modifierShiftsInRow: int) -> li
                     elif iterationOfDescontEmployee <=3 and shift <=3:
                         for employee in available_employees:
                             if employee.doNotAssign == False:
-                                schedule[day].append((employee.name, shift, employee.id))
+                                schedule[day].append((employee.name, shift, employee.id, employee.surename))
                                 available_employees.remove(employee)
                                 shiftsInRow(employee, day, modifierShiftsInRow)
                                 break
@@ -115,6 +115,7 @@ def generate_schedule(employees: list[Employee], modifierShiftsInRow: int) -> li
     
     #If there is exeption, then return False
     except NotEnoughEmploeesException as e:
+        allErrors.addError(day, shift)
         return False
 
     return schedule
