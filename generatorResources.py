@@ -3,9 +3,20 @@ from typing import List, Tuple
 from employees import Employee
 
 days = 30
+global allErrors
 
 class NotEnoughEmploeesException(Exception):
-    pass
+    def __init__(self, message):
+        super().__init__(message)
+        self.allErrors = []
+
+    def addError(self, day, shift):
+        self.allErrors.append((day, shift))
+        
+    def getErrors(self):
+        return self.allErrors
+
+allErrors = NotEnoughEmploeesException("")
 
 
 def shiftsInRow(employee: Employee, day: int, modifierShiftsInRow: int):
@@ -81,7 +92,7 @@ def assignEmployeesByOrder(available_employees: List[Employee], schedule: List[L
     
     try:
         employee = available_employees.pop(whichInTurn)
-        schedule[day].append((employee.name, shift, employee.id))
+        schedule[day].append((employee.name, shift, employee.id, employee.surename))
         shiftsInRow(employee, day, modifierShiftsInRow)
     except:
         #If there is no more employees to assign, but there are at least 2 employees on shift,
@@ -98,7 +109,7 @@ def assignEmployeesByOrder(available_employees: List[Employee], schedule: List[L
 def assignDescontEmployee(schedule: List[List[Tuple[str, int, int]]], day: int, shift: int, available_employees: List[Employee], descont_employee: List[Employee], modifierShiftsInRow: int) -> bool:
        
     descont_employee.sort(key=lambda employee: employee.shiftsInRow, reverse=True)
-    schedule[day].append((descont_employee[0].name, shift, descont_employee[0].id))
+    schedule[day].append((descont_employee[0].name, shift, descont_employee[0].id, descont_employee[0].surename))
     available_employees.remove(descont_employee[0])
     shiftsInRow(descont_employee[0], day, modifierShiftsInRow)
 
@@ -113,67 +124,70 @@ def isThisShiftValid(employeesOnShift :[Employee]) -> bool:
 
 def reasignEmployee(schedule: List[List[Tuple[str, int, int]]], day: int, shift: int, available_employees: List[Employee], maxShifts: int, mode: str, modifierShiftsInRow: int,employees: List[Employee], descont_employee = [], descontAllreadyAssigned = False):
 
- 
-    if mode == "descont":
-        allEmployeesWithDescontAndPossibleShift = [employee for employee in employees if employee.descont if shift in employee.possibleShifts[day] if day-1 in employee.workedDays if not employee.hadShift if not employee.contract]
+    try: 
+        if mode == "descont":
+            allEmployeesWithDescontAndPossibleShift = [employee for employee in employees if employee.descont if shift in employee.possibleShifts[day] if day-1 in employee.workedDays if not employee.hadShift if not employee.contract]
 
-        if descontAllreadyAssigned:
-            return 0
+            if descontAllreadyAssigned:
+                return 0
 
-        elif not allEmployeesWithDescontAndPossibleShift:
-            raise NotEnoughEmploeesException("There is no suitable descont employee")
-        
-        #Check if any employee in allEmployeesWithDescontAndPossibleShift is avaliable
-        for nShift in range(1, maxShifts+1):
-            try:
-                schedule[day-1].remove((allEmployeesWithDescontAndPossibleShift[0].name, nShift, allEmployeesWithDescontAndPossibleShift[0].id))
-                presentShift = []
-                for nEmployee in range(0, len(schedule[day-1])):
-                    if schedule[day-1][nEmployee][1] == nShift:
-                        for employee in employees:
-                            if employee.id == schedule[day-1][nEmployee][2]:
-                                presentShift.append(employee)
-                
-                if not isThisShiftValid(presentShift):
-                    raise NotEnoughEmploeesException("Prev shift is now incorrect due to deletion of prev employee")
-                        
-            except ValueError:
-                pass
+            elif not allEmployeesWithDescontAndPossibleShift:
+                raise NotEnoughEmploeesException("There is no suitable descont employee")
             
-        for n in range(1, maxShifts+1):
-            try:
-                schedule[day-1].remove((allEmployeesWithDescontAndPossibleShift[0].name, n, allEmployeesWithDescontAndPossibleShift[0].id))
-            except:
-                pass
-        #Assign the descont employee
-        allEmployeesWithDescontAndPossibleShift[0].shiftsInRow -= 1
-        descont_employee.append(allEmployeesWithDescontAndPossibleShift[0])
-        available_employees.append(allEmployeesWithDescontAndPossibleShift[0])
-        assignDescontEmployee(schedule, day, shift, available_employees, descont_employee, modifierShiftsInRow)
+            #Check if any employee in allEmployeesWithDescontAndPossibleShift is avaliable
+            for nShift in range(1, maxShifts+1):
+                try:
+                    schedule[day-1].remove((allEmployeesWithDescontAndPossibleShift[0].name, nShift, allEmployeesWithDescontAndPossibleShift[0].id))
+                    presentShift = []
+                    for nEmployee in range(0, len(schedule[day-1])):
+                        if schedule[day-1][nEmployee][1] == nShift:
+                            for employee in employees:
+                                if employee.id == schedule[day-1][nEmployee][2]:
+                                    presentShift.append(employee)
+                    
+                    if not isThisShiftValid(presentShift):
+                        raise NotEnoughEmploeesException("Prev shift is now incorrect due to deletion of prev employee")
+                            
+                except ValueError:
+                    pass
+                
+            for n in range(1, maxShifts+1):
+                try:
+                    schedule[day-1].remove((allEmployeesWithDescontAndPossibleShift[0].name, n, allEmployeesWithDescontAndPossibleShift[0].id))
+                except:
+                    pass
+            #Assign the descont employee
+            allEmployeesWithDescontAndPossibleShift[0].shiftsInRow -= 1
+            descont_employee.append(allEmployeesWithDescontAndPossibleShift[0])
+            available_employees.append(allEmployeesWithDescontAndPossibleShift[0])
+            assignDescontEmployee(schedule, day, shift, available_employees, descont_employee, modifierShiftsInRow)
 
-    if mode == "nonDescont":
-        allEmployeesWithPossibleShift = [employee for employee in employees if shift in employee.possibleShifts[day] if day-1 in employee.workedDays if not employee.hadShift if not employee.contract]
-        if not allEmployeesWithPossibleShift:
-            raise NotEnoughEmploeesException("There is no suitable employee")
-        #Check if any employee in allEmployeesWithDescontAndPossibleShift is avaliable
-        for nShift in range(1, maxShifts+1):
-            try:
-                schedule[day-1].remove((allEmployeesWithPossibleShift[0].name, nShift, allEmployeesWithPossibleShift[0].id))
-                presentShift = []
-                for nEmployee in range(0, len(schedule[day-1])):
-                    if schedule[day-1][nEmployee][1] == nShift:
-                        for employee in employees:
-                            if employee.id == schedule[day-1][nEmployee][2]:
-                                presentShift.append(employee)
-                if not isThisShiftValid(presentShift):
-                    raise NotEnoughEmploeesException("Prev shift is now incorrect due to deletion of prev employee")
-            except ValueError:
-                pass
-        for n in range(1, maxShifts+1):
-            try:
-                schedule[day-1].remove((allEmployeesWithPossibleShift[0].name, n, allEmployeesWithPossibleShift[0].id))
-            except:
-                pass
-        #Assign the descont employee
-        allEmployeesWithPossibleShift[0].shiftsInRow -= 1
-        available_employees.append(allEmployeesWithPossibleShift[0])
+        if mode == "nonDescont":
+            allEmployeesWithPossibleShift = [employee for employee in employees if shift in employee.possibleShifts[day] if day-1 in employee.workedDays if not employee.hadShift if not employee.contract]
+            if not allEmployeesWithPossibleShift:
+                raise NotEnoughEmploeesException("There is no suitable employee")
+            #Check if any employee in allEmployeesWithDescontAndPossibleShift is avaliable
+            for nShift in range(1, maxShifts+1):
+                try:
+                    schedule[day-1].remove((allEmployeesWithPossibleShift[0].name, nShift, allEmployeesWithPossibleShift[0].id))
+                    presentShift = []
+                    for nEmployee in range(0, len(schedule[day-1])):
+                        if schedule[day-1][nEmployee][1] == nShift:
+                            for employee in employees:
+                                if employee.id == schedule[day-1][nEmployee][2]:
+                                    presentShift.append(employee)
+                    if not isThisShiftValid(presentShift):
+                        raise NotEnoughEmploeesException("Prev shift is now incorrect due to deletion of prev employee")
+                except ValueError:
+                    pass
+            for n in range(1, maxShifts+1):
+                try:
+                    schedule[day-1].remove((allEmployeesWithPossibleShift[0].name, n, allEmployeesWithPossibleShift[0].id))
+                except:
+                    pass
+            #Assign the descont employee
+            allEmployeesWithPossibleShift[0].shiftsInRow -= 1
+            available_employees.append(allEmployeesWithPossibleShift[0])
+    except NotEnoughEmploeesException as e:
+        allErrors.addError(day, shift)
+        raise e
