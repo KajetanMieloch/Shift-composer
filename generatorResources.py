@@ -1,8 +1,12 @@
 from __future__ import annotations
 from typing import List, Tuple
 from employees import Employee
+import configparser
 
-days = 30
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+days = int(config['DEFAULT']['days'])
 global allErrors
 
 class NotEnoughEmploeesException(Exception):
