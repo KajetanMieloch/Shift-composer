@@ -153,7 +153,7 @@ def reasignEmployee(schedule: List[List[Tuple[str, int, int]]], day: int, shift:
                 
             for n in range(1, maxShifts+1):
                 try:
-                    schedule[day-1].remove((allEmployeesWithDescontAndPossibleShift[0].name, n, allEmployeesWithDescontAndPossibleShift[0].id))
+                    schedule[day-1].remove((allEmployeesWithDescontAndPossibleShift[0].name, n, allEmployeesWithDescontAndPossibleShift[0].id, allEmployeesWithDescontAndPossibleShift[0].surename))
                 except:
                     pass
             #Assign the descont employee
@@ -182,7 +182,7 @@ def reasignEmployee(schedule: List[List[Tuple[str, int, int]]], day: int, shift:
                     pass
             for n in range(1, maxShifts+1):
                 try:
-                    schedule[day-1].remove((allEmployeesWithPossibleShift[0].name, n, allEmployeesWithPossibleShift[0].id))
+                    schedule[day-1].remove((allEmployeesWithPossibleShift[0].name, n, allEmployeesWithPossibleShift[0].id, allEmployeesWithPossibleShift[0].surename))
                 except:
                     pass
             #Assign the descont employee
