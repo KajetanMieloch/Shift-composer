@@ -1,6 +1,18 @@
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph
+from PyPDF2 import PdfMerger
+import os
+
+
+def count(number :[int]) -> int:
+    sum = 0
+    for i in number:
+        if i != 0:
+            sum += 1
+    return sum
 
 
 
@@ -14,28 +26,46 @@ def txtProcessor(txt_file):
             data = [x.split(",") for x in data]
             
             for item in data:
+                   
                 if item[0].startswith('%^$@#'):
                     new_name = ' '.join(item[0].split()[1:3])
+                    new_name = new_name.split()[0].split('!')[0]+ " " + new_name.split()[1] + "\nTotal hours: "
                     value = int(item[0].split()[-1])
                     if new_name not in names:
                         names[new_name] = []
                     names[new_name].append(value)
-
+                    
+                if item[0].startswith('H4URS'):
+                    hours = item[0].split()[-1]
             n = max([len(v) for v in names.values()])
             table = [[x for x in range(0, n + 1)]] + [[k] + v for k, v in names.items()]
+            for employee in table[1:]:
+                employee[0] = employee[0].replace("\nTotal hours: ", "\nTotal hours: " + str(count(employee[1:])*8))
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
 
-    return table
+    return table, hours
 
-def generatePDF():
+def merge_pdfs(files :[str], output: str):
+    merger = PdfMerger()
+    for file in files:
+        merger.append(file)
+    merger.write(output)
+    merger.close()
+
+def deleteFiles(files :[str]):
+    for file in files:
+        os.remove(file)
+
+
+def generatePDF(number :int, maxNumber :int):
     # Create a PDF document
-    pdf_file = "work_schedule.pdf"
+    pdf_file = "work_schedule"+str(number)+".pdf"
     document = SimpleDocTemplate(pdf_file, pagesize=landscape(letter))
 
     # Create a list to hold the data for the table
-    data = txtProcessor("output.txt")
+    data, hours = txtProcessor("output.txt")
 
     # Create a table and set its style
     table = Table(data)
@@ -68,8 +98,21 @@ def generatePDF():
 
     table.setStyle(style)
 
+    # Get the sample style sheet
+    styles = getSampleStyleSheet()
+
+    # Create a title paragraph using the Heading1 style
+    title = Paragraph("Total hours: " + str(hours) + "\n Schedule no." + str(number), styles["Heading1"])
+
     # Build the PDF document
-    elements = [table]
+    elements = [title, table]
     document.build(elements)
 
-    print(f"PDF generated: {pdf_file}")
+    print(f"Schedule {number} generated")
+
+    if number == maxNumber-1:
+        print("Merging schedules...")
+        merge_pdfs([f"work_schedule{x}.pdf" for x in range(0, number+1)], "work_schedule.pdf")
+        print("schedules merged")
+        print("Deleting schedules...")
+        deleteFiles([f"work_schedule{x}.pdf" for x in range(0, number+1)])
