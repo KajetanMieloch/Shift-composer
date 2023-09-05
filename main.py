@@ -37,6 +37,8 @@ def saveScheduleToTXT(schedule: List[List[Tuple[str, int, int]]], filename: str,
 
 def saveScheduleToTXTToBeProcessed(schedule: List[List[Tuple[str, int, int]]], filename: str, stats: str = None):
     with open(filename, 'w') as f:
+        if stats:
+            f.write(stats)
         for day in range(len(schedule)):
             f.write(f"#@$^% {day + 1}\n")
             employees = set()
@@ -47,9 +49,6 @@ def saveScheduleToTXTToBeProcessed(schedule: List[List[Tuple[str, int, int]]], f
             for employee in listOfAllEmployees:
                 if employee.split()[0] not in employees:
                     f.write(f"%^$@# {employee.split()[0]} {employee.split()[1]} {employee.split()[2]} 0\n")
-        
-        if stats:
-            f.write(stats)
             
 def ratioOfPossibleShiftsToTotalHours(employee: Employee) -> float:
 
@@ -97,13 +96,16 @@ for day in range(-days, days+1):
             totalHours += employee.hoursInTotal
             employeesHours.append(str(employee.id) + " " + str(employee.hoursInTotal))
 
-        fairnessRatio = calculateFairnessRatios(fairnessArr)
+        #!disabled for now
+        #fairnessRatio = calculateFairnessRatios(fairnessArr)
 
         #Chceck if schedule is not in schedule list, if not, then add it to schedule list
 
         if generatedSchedule not in schedule:
 
-            schedule.append((generatedSchedule, totalHours, fairnessRatio, employeesHours))
+            #!disabled for now
+            #schedule.append((generatedSchedule, totalHours, fairnessRatio, employeesHours))
+            schedule.append((generatedSchedule, totalHours, employeesHours))
 
 
 
@@ -119,15 +121,16 @@ print("1. Schedule with the most hours")
 
 print("2. Schedule with the least hours")
 
-print("3. Schedule with the most fair ratio")
+#!disabled for now
+#print("3. Schedule with the most fair ratio")
 
-print("4. Schedule with the least fair ratio")
+#print("4. Schedule with the least fair ratio")
 
-print("5. Schedule with the most hours and the most fair ratio")
+#print("5. Schedule with the most hours and the most fair ratio")
 
-print("Fair ratio is calculated by dividing the number of disposition by the number of hours worked")
+#print("Fair ratio is calculated by dividing the number of disposition by the number of hours worked")
 
-print("In fair ratio, the lower the better")
+#print("In fair ratio, the lower the better")
 
 isThereShedule = True
 option = int(input("Choose option: "))
@@ -141,19 +144,20 @@ try:
 
         schedule.sort(key=lambda x: x[1])
 
-    elif option == 3:
+#!disabled for now
+    # elif option == 3:
 
-        schedule.sort(key=lambda x: x[2])
+    #     schedule.sort(key=lambda x: x[2])
 
-    elif option == 4:
+    # elif option == 4:
 
-        schedule.sort(key=lambda x: x[2], reverse=True)
+    #     schedule.sort(key=lambda x: x[2], reverse=True)
 
-    elif option == 5:
+    # elif option == 5:
 
-        schedule.sort(key=lambda x: x[1], reverse=True)
+    #     schedule.sort(key=lambda x: x[1], reverse=True)
 
-        schedule.sort(key=lambda x: x[2])
+    #     schedule.sort(key=lambda x: x[2])
 
     
     else:
@@ -171,9 +175,10 @@ except IndexError:
 if isThereShedule:
     print("\nGenerated TXT and PDF file!")
     
-    saveScheduleToTXT(schedule[0][0], "schedule.txt", f"Total hours: {schedule[0][1]}\nFair ratio: {schedule[0][2]}\nEmployees hours: {schedule[0][3]}")
-    saveScheduleToTXTToBeProcessed(schedule[0][0], "output.txt", f"Total hours: {schedule[0][1]}\nFair ratio: {schedule[0][2]}\nEmployees hours: {schedule[0][3]}")
-    generatePDF()
+    saveScheduleToTXT(schedule[0][0], "schedule.txt", f"Total hours: {schedule[0][1]}\nEmployees hours: {schedule[0][2]}")
+    for num in range(0, len(schedule)):   
+        saveScheduleToTXTToBeProcessed(schedule[num][0], "output.txt", f"H4URS {schedule[num][1]}\nEH4URS: {schedule[num][2]}")
+        generatePDF(num, len(schedule))
     
 else:
     print("No schedule to save\n")
