@@ -35,14 +35,14 @@ def defineEmployees():
     employees = []
     for employeeData in data:
         employee = Employee(
-            employeeData['first_name'],
+            employeeData['first_name']+ "!" + employeeData['last_name'],
             employeeData['last_name'],
             employeeData['id'],
             employeeData['day0'],
             employeeData['schedule'],
-            employeeData['is_manager'],
-            employeeData['is_full_time'],
-            employeeData['is_part_time']
+            employeeData['descont'],
+            employeeData['coordinator'],
+            employeeData['contract']
         )
         employees.append(employee)
     return employees
