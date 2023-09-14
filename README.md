@@ -17,6 +17,10 @@ Attributes:
 - `descont`: A boolean flag to determine if the employee has central training. At least one employee with this flag set to `True` must be on a shift.
 - `coordinator`: A boolean flag to determine if the employee is a coordinator. A coordinator is assigned first and if they have a disposition, they must be on a shift. If there is a coordinator on shift, no one else has a shift with them.
 - `contract`: A boolean flag to determine if the employee has a fixed schedule. They are assigned first and if they have a disposition, they must be on a shift.
+
+## Results
+You may see the result in file outputExample.pdf
+
 #
 For Python 3.7 and 3.8, add:
 
