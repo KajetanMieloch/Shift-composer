@@ -7,7 +7,8 @@ Shift Composer is a program that takes the disposition of every employee and gen
 The program can be configured using the `config.ini` file, where you can specify the number of days for which the schedule should be generated.
 
 ## Usage
-To use the program, you need to create `Employee` objects for each employee. The `Employee` class has the following attributes:
+To use the program, you need to modify `Employee` objects for each employee in `Employee.json`.
+Attributes:
 - `name`: The employee's name.
 - `surname`: The employee's surname.
 - `id`: The employee's ID.
